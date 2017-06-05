@@ -1,0 +1,30 @@
+{
+  "name": "comparator-pipeline",
+  "version": "1.0.0",
+  "description": "Configurable comparator for use in the array.sort() call",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": [
+    "javascript",
+    "comparator",
+    "pipeline",
+    "chain",
+    "chained",
+    "extendable",
+    "sort"
+  ],
+  "author": "Nicolas de Jong <nicolas@rutilo.nl>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nicolasdejong/comparator-pipeline.git"
+  },
+  "devDependencies": {
+    "jasmine": "^2.5.2"
+  },
+  "dependencies": {
+    "natural-sort": "^1.0.0"
+  }
+}
