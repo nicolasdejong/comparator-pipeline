@@ -47,11 +47,11 @@ When no comparator is added to the pipeline, the default comparator (literal) wi
 |**natural**    | Compare '8' before '20' when strings. (for a natural sort)
 |**locale**     | Compare using localization. Is configurable, so call with args as in String.localeCompare(...) without the first, or empty for defaults.
 
-|_keyMappers_   |
+|_keyMappers_   | |
 | --- | --- |
 |**key(name)**  | Name of field. Stops when already a result. Resets next step to defaults.
 
-|_valueMappers_ |
+|_valueMappers_ | |
 | --- | --- |
 |**text**       | Map values to string (alias: string[s])
 |**number[s]**  | Map values to floats (using parseFloat)
@@ -59,13 +59,13 @@ When no comparator is added to the pipeline, the default comparator (literal) wi
 |**ignoreCase** | Maps values to lowercase string
 |**trim**       | Maps values to trimmed string
 
-|_resultMappers_|
+|_resultMappers_| |
 | --- | --- |
 |**reverse[d]**  | Reverse results (ascending <-> descending)
 |**ascend[ing]** | Results are made ascending (a-z)
 |**descend[ing]**| Results are made descending (z-a)
 
-|_configure_    |
+|_configure_    | |
 | --- | --- |
 |**setup(...)** | Configure from strings, like 'natural', 'reversed'
 
@@ -88,7 +88,7 @@ array.sort( Comparator.setup('key', 'a', 'numbers', 'reversed') )
 ```Comparator.[type].name = function(...)```
 
 | Type | Parameters | Description |
-| --- | --- |
+| --- | --- | --- |
 |**comparators** | valueA, valueB | comparator functions (default when type is omitted). **must** be ascending.
 |**keyMappers**| value | Key mapper functions
 |**valueMappers** | value, initialValue | Value mapper functions. Return the new value to be compared.

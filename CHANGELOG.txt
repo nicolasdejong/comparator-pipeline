@@ -1,3 +1,6 @@
+1.1.1 -- 8 June 2017
+- Small doc change for markdown-spec differences between viewers
+
 1.1.0 -- 8 June 2017
 - Added ascending & descending result mappers
 - Added 'locale' comparator that uses String.localeCompare
