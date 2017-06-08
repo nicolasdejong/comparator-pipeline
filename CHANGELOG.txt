@@ -1,2 +1,7 @@
+1.1.0 -- 8 June 2017
+- Added ascending & descending result mappers
+- Added 'locale' comparator that uses String.localeCompare
+- Fixed small mistakes in the documentation
+
 1.0.0 -- 5 June 2017
 - Initial version

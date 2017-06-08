@@ -15,12 +15,12 @@
 import {Comparator} from 'comparator-pipeline';
 
 array.sort(Comparator);
-array.sort(Comparator.reversed);
+array.sort(Comparator.descending);
 array.sort(Comparator.map(v => something(v)).reversed);
 array.sort(Comparator.key('a').natural.key('b').reversed);
 ```
 
-## [Changelog](https://github.com/nicolasdejong/comparator-pipeline/blob/master/CHANGELOG.txt)
+## [Changelog](https://raw.githubusercontent.com/nicolasdejong/comparator-pipeline/master/CHANGELOG.txt)
 
 ## Install
 
@@ -37,52 +37,74 @@ Make sure to call the pipeline steps in the right order because otherwise some m
 So ```Comparator.natural.reversed``` works as expected.
 But ```Comparator.reversed.natural``` will not be reversed because the actual sort is after the ```reversed``` step.
 
+When no comparator is added to the pipeline, the default comparator (literal) will be added.
+
 #### Possible pipeline steps:
 
-| Name | Description |
+| Comparators | |
 | --- | --- |
-|_comparators:_|  |
 |**literal**    | Compare using < and >. (default)
 |**natural**    | Compare '8' before '20' when strings. (for a natural sort)
-|  |  |
+|**locale**     | Compare using localization. Is configurable, so call with args as in String.localeCompare(...) without the first, or empty for defaults.
+
 |_keyMappers_   |
+| --- | --- |
 |**key(name)**  | Name of field. Stops when already a result. Resets next step to defaults.
-|  |  |
+
 |_valueMappers_ |
+| --- | --- |
 |**text**       | Map values to string (alias: string[s])
 |**number[s]**  | Map values to floats (using parseFloat)
-|**map(mapper)**| Map values using a mapper function. Mapper should be in the form ```(value, obj) => value```
+|**map(mapper)**| Map values using a mapper function. Mapper should be in the form ```(value, obj) => value```. Note that obj is always the object to sort.
 |**ignoreCase** | Maps values to lowercase string
 |**trim**       | Maps values to trimmed string
-|  |  |
+
 |_resultMappers_|
-|**reverse[d]** | Reverse results (ascending <-> descending)
-|  |  |
+| --- | --- |
+|**reverse[d]**  | Reverse results (ascending <-> descending)
+|**ascend[ing]** | Results are made ascending (a-z)
+|**descend[ing]**| Results are made descending (z-a)
+
 |_configure_    |
+| --- | --- |
 |**setup(...)** | Configure from strings, like 'natural', 'reversed'
-|  |  |
-|_extending_    |
-||  like Comparator.[type].name = function(...)
-|**comparators** | add comparator function (default when type is omitted)
-|**keyMappers**| add key mapper
-|**valueMappers** | add value mapper
-|**resultMappers**| add result mapper
-|  |  |
 
-
-## More Examples
+##### Examples:
 
 ```javascript
 array.sort( Comparator )
 array.sort( Comparator.reversed )
+array.sort( Comparator.natural.descending )
+array.sort( Comparator.locale().ascending )
 array.sort( Comparator.key('foo').literal.strings )
 array.sort( Comparator.map( obj => obj.n * obj.a ).numbers )
 array.sort( Comparator.key('foo').map( (k, obj) => k * obj.a ).numbers )
 array.sort( Comparator.key('a').reversed.key('b').numbers.key('c').literal.strings )
 array.sort( Comparator.setup('key', 'a', 'numbers', 'reversed') )
-Comparator.abs = (a, b) => Comparator.any(Math.abs(a), Math.abs(b));
-array.sort( Comparator.abs )
 ```
+
+#### Extending pipeline functionality
+
+```Comparator.[type].name = function(...)```
+
+| Type | Parameters | Description |
+| --- | --- |
+|**comparators** | valueA, valueB | comparator functions (default when type is omitted). **must** be ascending.
+|**keyMappers**| value | Key mapper functions
+|**valueMappers** | value, initialValue | Value mapper functions. Return the new value to be compared.
+|**resultMappers**| result | Result mapper functions. Returns the new result.
+|  |  |
+
+The ```this``` will be current state. Current state holds: initialA, initialB, result, finished, pipeline.
+Current state can be used by mappers. For example reversed/ascending/descending uses it to remember if the order is reversed.
+
+##### Examples:
+
+```javascript
+Comparator.valueMappers.abs = val => Math.abs(val);
+array.sort( Comparator.numbers.abs )
+```
+
 
 
 ## Example: Key
@@ -131,7 +153,7 @@ For example:
 Comparator.valueMappers.ignoreCase = v => String(v).toLowerCase();
 ```
 
-makes it possible to use ```Comparator.ignoreCase.natural```
+makes it possible to use ```Comparator.ignoreCase```
 
 or:
 

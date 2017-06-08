@@ -15,6 +15,8 @@ describe('Comparator', () => {
   it('minimal', () => {
     expect( array.slice().sort(Comparator) )
       .toEqual( ['20', '8', 'a', 'b', 'c'] );
+    expect( array.slice().sort(Comparator.reversed) )
+      .toEqual( ['c', 'b', 'a', '8', '20'] );
   });
   it('any', () => {
     expect( array.slice().sort(Comparator.any) )
@@ -41,6 +43,28 @@ describe('Comparator', () => {
   it('reversed', () => {
     expect( array.slice().sort(Comparator.natural.reversed) )
       .toEqual( ['c', 'b', 'a', '20', '8'] );
+  });
+  it('ascending', () => {
+    const ascendingArray = ['8', '20', 'a', 'b', 'c'];
+    expect( array.slice().sort(Comparator.ascending) )
+      .toEqual( ['20', '8', 'a', 'b', 'c'] );
+    expect( array.slice().sort(Comparator.natural.ascending) )
+      .toEqual( ascendingArray );
+    expect( array.slice().sort(Comparator.natural.reversed.ascending) )
+      .toEqual( ascendingArray );
+    expect( array.slice().sort(Comparator.natural.reversed.descending.ascending) )
+      .toEqual( ascendingArray );
+  });
+  it('descending', () => {
+    const descendingArray = ['c', 'b', 'a', '20', '8'];
+    expect( array.slice().sort(Comparator.descending) )
+      .toEqual( ['c', 'b', 'a', '8', '20'] );
+    expect( array.slice().sort(Comparator.natural.descending) )
+      .toEqual( descendingArray );
+    expect( array.slice().sort(Comparator.natural.reversed.descending) )
+      .toEqual( descendingArray );
+    expect( array.slice().sort(Comparator.natural.reversed.ascending.descending) )
+      .toEqual( descendingArray );
   });
   it('key', () => {
     expect( objects.slice().sort(Comparator.key('c'))

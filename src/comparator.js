@@ -22,11 +22,12 @@ const functionsPerType = {
   [VALUEMAPPER]:  createTargetProxy(VALUEMAPPER),
   [RESULTMAPPER]: createTargetProxy(RESULTMAPPER)
 };
-const defaultSort = (a, b) => (a < b ? -1 : (a > b ? 1 : 0));
+const defaultSort = (a, b) => (a < b ? -1 : (a === b ? 0 : 1));
 
 Comparator['default'] = defaultSort;
 Comparator.natural    = naturalSort;
 Comparator.literal    = defaultSort;
+Comparator.configurable.locale = (locales, ...options) => (a, b) => String(a).localeCompare(b, locales, ...options);
 Comparator.configurable.setup = function(...items) {
   // this = { pipeline, actions, createComparatorProxy }
   let pipeline = this.pipeline;
@@ -61,53 +62,60 @@ Comparator.keyMappers.configurable.key = (...names) => resultIn => {
   return result;
 };
 
-Comparator.resultMappers.reversed = result => -result;
+Comparator.resultMappers.reversed = function(result) { this.reversed = !this.reversed; return -result; };
 Comparator.resultMappers.reverse  = Comparator.resultMappers.reversed;
-
+Comparator.resultMappers.ascending = function(result) { if (this.reversed) { this.reversed = false; return -result; } return result; };
+Comparator.resultMappers.ascend    = Comparator.resultMappers.ascending;
+Comparator.resultMappers.descending = function(result) { if (!this.reversed) { this.reversed = true; return -result; } return result; };
+Comparator.resultMappers.descend    = Comparator.resultMappers.descending;
 
 function pipelineRunner(pipeline, a, b) {
-  let initialA = a;
-  let initialB = b;
-  let result = undefined;
-  let finished = false;
-  let getResult = () => result = actions['default'].func(a, b);
-  let hasResult = () => result !== undefined && result !== 0;
-  let mappedKey = false;
+  let state = {
+    initialA: a,
+    initialB: b,
+    result: undefined,
+    finished: false,
+    mappedKey: false,
+    pipeline: pipeline
+  };
+  let getResult = () => state.result = actions['default'].func.call(state, a, b);
+  let hasResult = () => state.result !== undefined && state.result !== 0;
+
   pipeline.forEach(step => {
-    if (finished) return;
+    if (state.finished) return;
 
     if (!hasResult()) {
       switch (step.type) {
-        case COMPARATOR:   result = step.func(a, b);
+        case COMPARATOR:   state.result = step.func(a, b);
                            break;
-        case VALUEMAPPER:  a = step.func(a, initialA);
-                           b = step.func(b, initialB);
+        case VALUEMAPPER:  a = step.func.call(state, a, state.initialA);
+                           b = step.func.call(state, b, state.initialB);
                            break;
         case RESULTMAPPER: getResult();
                            if (hasResult()) {
-                             result = step.func(result);
+                             state.result = step.func.call(state, state.result);
                            }
                            break;
-        case KEYMAPPER:    if (mappedKey && hasResult(getResult())) {
-                             finished = true;
+        case KEYMAPPER:    if (state.mappedKey && hasResult(getResult())) {
+                             state.finished = true;
                            } else {
-                             a = step.func(initialA);
-                             b = step.func(initialB);
-                             mappedKey = true;
+                             a = step.func.call(state, state.initialA);
+                             b = step.func.call(state, state.initialB);
+                             state.mappedKey = true;
                            }
                            break;
       }
     } else {
       switch (step.type) {
-        case KEYMAPPER:    finished = true;
+        case KEYMAPPER:    state.finished = true;
                            break;
-        case RESULTMAPPER: result = step.func(result);
+        case RESULTMAPPER: state.result = step.func.call(state, state.result);
                            break;
       }
     }
   });
-  if (result === undefined) getResult();
-  return result;
+  if (state.result === undefined) getResult();
+  return state.result;
 }
 function createTargetProxy(type, proxyOptions = {}) {
   return new Proxy({}, {
