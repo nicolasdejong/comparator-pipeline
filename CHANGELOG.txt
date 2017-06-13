@@ -1,3 +1,11 @@
+1.2.0 -- 13 June 2017
+- Fixed 'main' field in package.json
+- Refactoring & cleanup
+- keyMappers extension target removed
+- Extensions are now all mapped to the 'steps' target
+- Added 'orElse' and 'end' step
+- No braces now also supported on configurable steps (althought 'end' is required if last step)
+
 1.1.1 -- 8 June 2017
 - Small doc change for markdown-spec differences between viewers
 
