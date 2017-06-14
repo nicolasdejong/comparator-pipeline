@@ -188,21 +188,6 @@ Comparator.steps.stop = state => state.isFinished = true;
 ```
 
 
-```javascript
-Comparator.valueMappers.ignoreCase = v => String(v).toLowerCase();
-```
-
-makes it possible to use ```Comparator.ignoreCase```
-
-or:
-
-```javascript
-Comparator.valueMappers.sortOnFirstCapital = v => v.replace( /^(.*?)([A-Z][^ ]+)/, '$2$1' );
-```
-
-makes it possible to use ```Comparator.sortOnFirstCapital```
-
-
 #### Extension configuration
 
 When an extension requires configuration input, the 'configurable' key

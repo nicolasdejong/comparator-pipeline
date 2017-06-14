@@ -1,3 +1,8 @@
+1.2.1 -- 14 June 2017
+- '__esModule' Babel support (returns undefined instead of throw 'unknown comparator')
+- Made 'use strict' local
+- Small change to documentation
+
 1.2.0 -- 13 June 2017
 - Fixed 'main' field in package.json
 - Refactoring & cleanup

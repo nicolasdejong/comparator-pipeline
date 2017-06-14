@@ -1,13 +1,12 @@
-'use strict'
-let naturalSort = require('natural-sort')();
-
 /**
- * Comparators.
- * Pipeline comparator. Pipeline is performed left to right.
+ * Comparator-pipeline.
+ * Pipeline is performed left to right.
  * For example array.sort(Comparator.natural.reversed);
  *
  * See readme.md for documentation.
  **/
+(function(naturalSort){
+'use strict';
 const Comparator = createComparatorProxy([]);
 module.exports = Comparator;
 
@@ -173,7 +172,10 @@ function createComparatorProxy(previousPipeline = [], step) {
 
     let newStep = actions[prop];
     if (!newStep && prop === 'configurable') return functionsPerType[COMPARATOR][prop];
-    if (!newStep) throw new Error('Unknown Comparator function requested: ' + String(prop));
+    if (!newStep) {
+      if (prop === '__esModule') return undefined;
+      throw new Error('Unknown Comparator function requested: ' + String(prop));
+    }
     if (newStep.configurable) {
       const createStep = (...args) => ({
         name: newStep.name,
@@ -231,9 +233,6 @@ function createPipelineFromArgs(...items) {
 function pipelineToString(pipeline) {
   return pipeline.map(s=>s.name + (s.args ? '(' + s.args + ')' : '')).join('.') || '[empty]';
 }
-
-// Returns a new array where all elements that are arrays are replaced by their elements, recursively
-// This was originally written on Array.prototype but there should not be side-effects in this module.
 function flatten(array, flattening) {
   if (!(flattening instanceof Set)) flattening = new Set();
   if (flattening.has(array)) return []; // prevent endless recursion
@@ -247,4 +246,5 @@ function flatten(array, flattening) {
     }
   });
   return flat;
-};
+}
+})(require('natural-sort'));

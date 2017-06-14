@@ -1,6 +1,6 @@
 {
   "name": "comparator-pipeline",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Configurable comparator for use in the array.sort() call",
   "main": "./src/comparator.js",
   "scripts": {
