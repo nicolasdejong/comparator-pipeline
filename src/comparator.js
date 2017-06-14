@@ -7,49 +7,54 @@
  **/
 (function(naturalSort){
 'use strict';
-const Comparator = createComparatorProxy([]);
+var Comparator = createComparatorProxy([]);
 module.exports = Comparator;
 
-const actions = {}; // name -> { func, name, type }
-const COMPARATOR   = 'comparators';
-const VALUEMAPPER  = 'valueMappers';
-const RESULTMAPPER = 'resultMappers';
-const STEP         = 'steps';
-const functionsPerType = {
-  [COMPARATOR]:   createTargetProxy(COMPARATOR),
-  [VALUEMAPPER]:  createTargetProxy(VALUEMAPPER),
-  [RESULTMAPPER]: createTargetProxy(RESULTMAPPER),
-  [STEP]:         createTargetProxy(STEP)
+var actions = {}; // name -> { func, name, type }
+var COMPARATOR   = 'comparators';
+var VALUEMAPPER  = 'valueMappers';
+var RESULTMAPPER = 'resultMappers';
+var STEP         = 'steps';
+var functionsPerType = {
+  comparators:   createTargetProxy(COMPARATOR),
+  valueMappers:  createTargetProxy(VALUEMAPPER),
+  resultMappers: createTargetProxy(RESULTMAPPER),
+  steps:         createTargetProxy(STEP)
 };
-const defaultSort = (a, b) => (a < b ? -1 : (a === b ? 0 : 1));
+var defaultSort = function(a, b) { return (a < b ? -1 : (a === b ? 0 : 1)); };
 
 Comparator['default'] = defaultSort;
 Comparator.literal    = defaultSort;
-Comparator.natural    = naturalSort;
-Comparator.configurable.locale = (locales, ...options) => (a, b) => String(a).localeCompare(b, locales, ...options);
+Comparator.natural    = naturalSort(/*options*/);
+Comparator.configurable.locale = function(locales, o1, o2, o3, o4) {
+  return function(a, b) { return String(a).localeCompare(b, locales, o1, o2, o3, o4); }
+};
 
-Comparator.valueMappers.any        = v => v;
-Comparator.valueMappers.text       = v => String(v);
+Comparator.valueMappers.any        = function(v) { return v; };
+Comparator.valueMappers.text       = function(v) { return String(v); };
 Comparator.valueMappers.string     = Comparator.valueMappers.text;
 Comparator.valueMappers.strings    = Comparator.valueMappers.string;
-Comparator.valueMappers.numbers    = v => parseFloat(v);
+Comparator.valueMappers.numbers    = function(v) { return parseFloat(v); }
 Comparator.valueMappers.number     = Comparator.valueMappers.numbers;
-Comparator.valueMappers.configurable.map = mapper => function(val, obj) { return mapper.call(this, val, obj); }; // TODO: cache mappings
-Comparator.valueMappers.ignoreCase = v => String(v).toLowerCase();
-Comparator.valueMappers.trim       = v => String(v).trim();
+Comparator.valueMappers.configurable.map = function(mapper) { return function(val, obj) { return mapper.call(this, val, obj); }; }; // TODO: cache mappings
+Comparator.valueMappers.ignoreCase = function(v) { return String(v).toLowerCase(); };
+Comparator.valueMappers.trim       = function(v) { return String(v).trim(); };
 
-Comparator.steps.configurable.key = (...names) => state => {
-  if (state.hasResult()) {
-    state.isFinished = true;
-  } else {
-    if (names && names.length) {
-      state.a = (state.initialA || {})[names.find(name => (state.initialA || {})[name] !== undefined)];
-      state.b = (state.initialB || {})[names.find(name => (state.initialB || {})[name] !== undefined)];
-      state.getResult();
+Comparator.steps.configurable.key = function() {
+  var names = Array.from(arguments);
+  return function(state) {
+    if (state.hasResult()) {
+      state.isFinished = true;
+    } else {
+      if (names && names.length) {
+        state.a = (state.initialA || {})[names.find(function(name) { return (state.initialA || {})[name] !== undefined; })];
+        state.b = (state.initialB || {})[names.find(function(name) { return (state.initialB || {})[name] !== undefined; })];
+        state.getResult();
+      }
     }
-  }
+  };
 };
-Comparator.steps.orElse = state => {
+Comparator.steps.orElse = function(state) {
   if (state.result === undefined) state.getResult();
   if (state.hasResult()) {
     state.isFinished = true;
@@ -57,7 +62,7 @@ Comparator.steps.orElse = state => {
     state.reset();
   }
 };
-Comparator.steps.end = state => state.isFinished = true;
+Comparator.steps.end = function(state) { state.isFinished = true; };
 
 Comparator.resultMappers.reversed = function(result) { this.reversed = !this.reversed; return -result; };
 Comparator.resultMappers.reverse  = Comparator.resultMappers.reversed;
@@ -67,7 +72,7 @@ Comparator.resultMappers.descending = function(result) { if (!this.reversed) { t
 Comparator.resultMappers.descend    = Comparator.resultMappers.descending;
 
 function pipelineRunner(pipeline, a, b) {
-  const state = {
+  var state = {
     a: a,
     b: b,
     initialA: a,
@@ -79,10 +84,10 @@ function pipelineRunner(pipeline, a, b) {
     step: undefined,
     comparator: undefined,
 
-    getResult: () => state.result = state.comparator.call(state, state.a, state.b),
-    hasResult: () => state.result !== undefined && state.result !== 0,
-    checkResult: () => (state.hasResult() ? state.result : state.getResult()),
-    reset: () => {
+    getResult: function() { return (state.result = state.comparator.call(state, state.a, state.b)); },
+    hasResult: function() { return state.result !== undefined && state.result !== 0; },
+    checkResult: function() { return (state.hasResult() ? state.result : state.getResult()); },
+    reset: function() {
       state.a = state.initialA;
       state.b = state.initialB;
       state.result = undefined;
@@ -93,7 +98,7 @@ function pipelineRunner(pipeline, a, b) {
   state.reset();
   pipeline.state = state;
 
-  pipeline.forEach(step => {
+  pipeline.forEach(function(step) {
     if (typeof step === 'function') {
       step = step.call(state, state);
     }
@@ -121,18 +126,19 @@ function pipelineRunner(pipeline, a, b) {
   if (state.result === undefined) state.getResult();
   return state.result;
 }
-function createTargetProxy(type, proxyOptions = {}) {
+function createTargetProxy(type, proxyOptions) {
+  if (!proxyOptions) proxyOptions = {};
   return new Proxy({}, {
-    get: (obj, prop) => {
+    get: function(obj, prop) {
       if (typeof prop === 'symbol') return undefined;
       if (prop === 'type') return type;
       if (prop === 'configurable') return createTargetProxy(type, { configurable: true });
       return (actions[prop] || {}).func;
     },
-    set: (obj, prop, func) => {
+    set: function(obj, prop, func) {
       if (prop === 'configurable') throw new Error('Attempting to set a read-only property: ' + prop);
       if (typeof func !== 'function') throw new Error('Attempted to set Comparator function to non-function: ' + func);
-      let options = Object.assign({}, proxyOptions);
+      var options = Object.assign({}, proxyOptions);
 
       if (String(func).includes('return function')) {
         options.configurable = true;
@@ -144,81 +150,87 @@ function createTargetProxy(type, proxyOptions = {}) {
       });
       return true;
     },
-    deleteProperty: (obj, prop) => {
+    deleteProperty: function(obj, prop) {
       delete actions[prop];
       return true;
     },
   });
 }
-function createComparatorProxy(previousPipeline = [], step) {
-  let pipeline = step ? previousPipeline.concat(step) : [].concat(previousPipeline);
-  let proxiedFunction = (a, b) => pipelineRunner(pipeline, a, b);
+function createComparatorProxy(previousPipeline, step) {
+  if (!previousPipeline) previousPipeline = [];
+  var pipeline = step ? previousPipeline.concat(step) : [].concat(previousPipeline);
+  var proxiedFunction = function(a, b) { return pipelineRunner(pipeline, a, b); };
   proxiedFunction.pipeline = pipeline;
 
-  const getProp = prop => {
-    let funcs = functionsPerType[prop];
+  var getProp = function(prop) {
+    var funcs = functionsPerType[prop];
     if (funcs) return funcs;
 
     switch(prop) {
       case Symbol.toStringTag: return step ? String(step.func) : undefined;
-      case Symbol.toPrimitive: return (...args) => 'Comparator: ' + pipelineToString(pipeline);
+      case Symbol.toPrimitive: return function() { return 'Comparator: ' + pipelineToString(pipeline); };
       case Symbol['util.inspect.custom']: return 'Comparator function';
       case 'valueOf': return proxiedFunction;
       case 'name': return 'ComparatorProxy';
-      case 'setup': return (...args) => createComparatorProxy(pipeline.concat(createPipelineFromArgs(...args)));
+      case 'setup': return function() { return createComparatorProxy(pipeline.concat(createPipelineFromArgs(Array.from(arguments)))); };
       default:
     }
     if (proxiedFunction[prop]) return proxiedFunction[prop];
 
-    let newStep = actions[prop];
+    var newStep = actions[prop];
     if (!newStep && prop === 'configurable') return functionsPerType[COMPARATOR][prop];
     if (!newStep) {
       if (prop === '__esModule') return undefined;
       throw new Error('Unknown Comparator function requested: ' + String(prop));
     }
     if (newStep.configurable) {
-      const createStep = (...args) => ({
-        name: newStep.name,
-        type: newStep.type,
-        func: newStep.func.apply(null, args)
-      });
-      const cfgFunc = (...args) => {
-        return createComparatorProxy(pipeline, createStep(...args));
+      var createStep = function() {
+        var args = flatten(Array.from(arguments));
+        return {
+          name: newStep.name,
+          type: newStep.type,
+          func: newStep.func.apply(null, args)
+        };
+      };
+      var cfgFunc = function() {
+        var args = flatten(Array.from(arguments));
+        return createComparatorProxy(pipeline, createStep(args));
       };
       return new Proxy(cfgFunc, {
-        get: (obj, prop) => createComparatorProxy(pipeline, createStep())[prop],
-        set: (obj, prop, value) => setProp(prop, value),
-        deleteProperty: (obj, prop) => delProp(prop)
+        get: function(obj, prop) { return createComparatorProxy(pipeline, createStep())[prop]; },
+        set: function(obj, prop, value) { return setProp(prop, value); },
+        deleteProperty: function(obj, prop) { return delProp(prop); }
       });
     }
     return createComparatorProxy(pipeline, newStep);
   };
-  const setProp = (prop, value) => {
+  var setProp = function(prop, value) {
     if (prop in functionsPerType) throw new Error('Field is readonly: ' + prop);
     functionsPerType.comparators[prop] = value;
     return true;
   };
-  const delProp = (prop) => {
+  var delProp = function(prop) {
     delete actions[prop];
     return true;
   };
 
   return new Proxy( proxiedFunction, {
-    get: (obj, prop) => getProp(prop),
-    set: (obj, prop, value) => setProp(prop, value),
-    deleteProperty: (obj, prop) => delProp(prop)
+    get: function(obj, prop) { return getProp(prop); },
+    set: function(obj, prop, value) { return setProp(prop, value); },
+    deleteProperty: function(obj, prop) { return delProp(prop); }
   });
 }
 
-function createPipelineFromArgs(...items) {
-  let pipeline = [];
+function createPipelineFromArgs() {
+  var items = Array.from(arguments);
+  var pipeline = [];
   items = flatten(items);
   while (items.length) {
-    let prop = items.shift();
-    let action = actions[prop];
+    var prop = items.shift();
+    var action = actions[prop];
     if (!action) throw new Error('Unknown step requested: ' + prop);
     if (action.configurable) {
-      const arg = items.shift(); // currently all configurables have exactly 1 argument in setup.
+      var arg = items.shift(); // currently all configurables have exactly 1 argument in setup.
       action = {
         type: action.type,
         name: action.name,
@@ -231,16 +243,16 @@ function createPipelineFromArgs(...items) {
   return pipeline;
 }
 function pipelineToString(pipeline) {
-  return pipeline.map(s=>s.name + (s.args ? '(' + s.args + ')' : '')).join('.') || '[empty]';
+  return pipeline.map(function(s) { return s.name + (s.args ? '(' + s.args + ')' : ''); }).join('.') || '[empty]';
 }
 function flatten(array, flattening) {
   if (!(flattening instanceof Set)) flattening = new Set();
   if (flattening.has(array)) return []; // prevent endless recursion
   flattening.add(array);
-  let flat = [];
-  array.forEach( item => {
+  var flat = [];
+  array.forEach( function(item) {
     if (Array.isArray(item)) {
-      flatten(item, flattening).forEach( fitem => flat.push(fitem) );
+      flatten(item, flattening).forEach( function(fitem) { flat.push(fitem); } );
     } else {
       flat.push(item);
     }
