@@ -129,7 +129,7 @@ The ```this``` of the function is also pipeline state.
 A few convenience types are available that don't have to use the pipeline state directly:
 
 | Type | Parameters | Return | Description |
-| --- | --- | --- |
+| --- | --- | --- | --- |
 |**comparators** | valueA, valueB | < 0, 0 or > 0 | comparator functions (default when type is omitted). **must** be ascending.
 |**valueMappers** | value, initialValue | new value | Value mapper functions.
 |**resultMappers**| result | new result | Result mapper functions.
@@ -181,7 +181,7 @@ array.sort(Comparator.ignoreCase)
 Comparator.valueMappers.onFirstCapital = v => v.replace( /^(.*?)([A-Z][^ ]+)/, '$2$1' );
 array.sort(Comparator.onFirstCapital)
 
-Comparator.reversed = result => -result;
+Comparator.resultMappers.reversed = result => -result;
 array.sort( Comparator.numbers.abs.reversed );
 
 Comparator.steps.stop = state => state.isFinished = true;
