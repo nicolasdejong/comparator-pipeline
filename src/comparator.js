@@ -179,10 +179,7 @@ function createComparatorProxy(previousPipeline, step) {
 
     var newStep = actions[prop];
     if (!newStep && prop === 'configurable') return functionsPerType[COMPARATOR][prop];
-    if (!newStep) {
-      if (prop === '__esModule') return undefined;
-      throw new Error('Unknown Comparator function requested: ' + String(prop));
-    }
+    if (!newStep) return undefined; // this happens quite frequently by feature-tests
     if (newStep.configurable) {
       var createStep = function() {
         var args = flatten(Array.from(arguments));
